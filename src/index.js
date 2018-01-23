@@ -35,24 +35,27 @@ const properties = {
       if (!this._explicitStatus) {
         this.statusCode = 200
       }
-
-      return this._response.end(...args)
+      if (typeof args[args.length - 1] !== 'function') {
+        args.push(this._next);
+      }
+      return this._response.end(...args);
     }
   }
 }
 
 
-function makeResponse (res) {
+function makeResponse (res, next) {
   return Object.create({
     __proto__: res,
-    _response: res
+    _response: res,
+    _next: next
   }, properties)
 }
 
 
 function wrap (ctx, middleware, next) {
   return new Promise((resolve, reject) => {
-    middleware(ctx.req, makeResponse(ctx.res), err => {
+    middleware(ctx.req, makeResponse(ctx.res, next), err => {
       if (err) {
         reject(err)
         return
